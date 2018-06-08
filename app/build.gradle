@@ -4,12 +4,35 @@ android {
     compileSdkVersion 27
     defaultConfig {
         applicationId "io.agora.agorasubchannel"
-        minSdkVersion 15
+        minSdkVersion 16
         targetSdkVersion 27
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+        externalNativeBuild {
+            cmake {
+                arguments "-DANDROID_STL=gnustl_static",
+                        "-DANDROID_PLATFORM=android-19",
+                        "-DCMAKE_BUILD_TYPE=Debug",
+                        "-DANDROID_TOOLCHAIN=gcc",
+                        "-DANDROID_STL_FORCE_FEATURES=OFF",
+                        "-DFEATURE_ENABLE_PRIVATE_LIBS_ONLY=OFF",
+                        "-DANDROID_ARM_NEON=TRUE"
+            }
+        }
+
+        ndk {
+            abiFilters "armeabi-v7a" // DO NOT MODIFY THIS LINE, IT'S UPDATED BY BUILD MACHINE AUTOMATICALLY.
+        }
     }
+
+    externalNativeBuild {
+        cmake {
+            path "../../media_sdk3/proj.cmake/CMakeLists.txt"
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false
@@ -20,6 +43,8 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    api project(':proj.android')
     implementation 'com.android.support:appcompat-v7:27.1.1'
     implementation 'com.android.support.constraint:constraint-layout:1.1.1'
     testImplementation 'junit:junit:4.12'
