@@ -21,6 +21,7 @@ import io.agora.rtc.RtcEngine;
 import io.agora.rtc.video.VideoCanvas;
 
 public class VideoChatViewActivity extends AppCompatActivity {
+    private final static String TAG = VideoChatViewActivity.class.getSimpleName();
 
     private static final String LOG_TAG = VideoChatViewActivity.class.getSimpleName();
 
@@ -34,9 +35,32 @@ public class VideoChatViewActivity extends AppCompatActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    setupRemoteVideo(uid);
+                    if (uid == 1234) {
+                        setupTeacherRemoteVideo(uid);
+                    } else {
+                        setupRemoteVideo(uid);
+                    }
                 }
             });
+        }
+
+        @Override
+        public void onUserJoined(final int uid, int elapsed) {
+            /*runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (uid == 1234) {
+                        setupTeacherRemoteVideo(uid);
+                    } else {
+                        setupRemoteVideo(uid);
+                    }
+                }
+            });*/
+        }
+
+        @Override
+        public void onFirstRemoteAudioFrame(int uid, int elapsed) {
+            Log.e(TAG, "onFirstRemoteAudioFrame");
         }
 
         @Override
@@ -63,6 +87,11 @@ public class VideoChatViewActivity extends AppCompatActivity {
         public void onError(int err) {
             Toast.makeText(VideoChatViewActivity.this,err + "",Toast.LENGTH_LONG).show();
         }
+
+        @Override
+        public void onJoinChannelSuccess(String channel, int uid, int elapsed) {
+            Log.e(TAG, "onJoinChannelSuccess: " + channel + "uid: " + uid);
+        }
     };
 
     @Override
@@ -78,8 +107,9 @@ public class VideoChatViewActivity extends AppCompatActivity {
     private void initAgoraEngineAndJoinChannel() {
         initializeAgoraEngine();     // Tutorial Step 1
         setupVideoProfile();         // Tutorial Step 2
-        setupLocalVideo();           // Tutorial Step 3
+        //setupLocalVideo();           // Tutorial Step 3
         joinChannel();               // Tutorial Step 4
+        joinSubChannel();
     }
 
     public boolean checkSelfPermission(String permission, int requestCode) {
@@ -138,12 +168,16 @@ public class VideoChatViewActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
 
+        mRtcEngine.leaveSubChannel();
         leaveChannel();
+
+        RtcEngine.destroy();
+        mRtcEngine = null;
+
         new Thread(new Runnable() {
             @Override
             public void run() {
-                RtcEngine.destroy();
-                mRtcEngine = null;
+
             }
         });
     }
@@ -219,11 +253,16 @@ public class VideoChatViewActivity extends AppCompatActivity {
 
     // Tutorial Step 4
     private void joinChannel() {
-        mRtcEngine.joinChannel(null, "demoChannel1", "Extra Optional Data", 0); // if you do not specify the uid, we will generate the uid for you
+        mRtcEngine.joinChannel(null, "stu", "Extra Optional Data", 0); // if you do not specify the uid, we will generate the uid for you
+    }
+
+    private void joinSubChannel() {
+        mRtcEngine.joinSubChannel(null, "tea", "Extra Optional Data", 0); // if you do not specify the uid, we will generate the uid for you
     }
 
     // Tutorial Step 5
     private void setupRemoteVideo(int uid) {
+        /*
         FrameLayout container = (FrameLayout) findViewById(R.id.remote_video_view_container);
 
         if (container.getChildCount() >= 1) {
@@ -237,6 +276,23 @@ public class VideoChatViewActivity extends AppCompatActivity {
         surfaceView.setTag(uid); // for mark purpose
         View tipMsg = findViewById(R.id.quick_tips_when_use_agora_sdk); // optional UI
         tipMsg.setVisibility(View.GONE);
+        */
+
+        FrameLayout container = (FrameLayout) findViewById(R.id.remote_stu_video_view_container);
+
+        SurfaceView surfaceView = RtcEngine.CreateRendererView(getBaseContext());
+        surfaceView.setZOrderMediaOverlay(true);
+        container.addView(surfaceView);
+        mRtcEngine.setupRemoteVideo(new VideoCanvas(surfaceView, VideoCanvas.RENDER_MODE_ADAPTIVE, uid));
+    }
+
+    private void setupTeacherRemoteVideo(int uid) {
+        FrameLayout container = (FrameLayout) findViewById(R.id.teacher_video_view_container);
+
+        SurfaceView surfaceView = RtcEngine.CreateRendererView(getBaseContext());
+        surfaceView.setZOrderMediaOverlay(true);
+        container.addView(surfaceView);
+        mRtcEngine.setupRemoteVideo(new VideoCanvas(surfaceView, VideoCanvas.RENDER_MODE_ADAPTIVE, uid));
     }
 
     // Tutorial Step 6
@@ -246,7 +302,7 @@ public class VideoChatViewActivity extends AppCompatActivity {
 
     // Tutorial Step 7
     private void onRemoteUserLeft() {
-        FrameLayout container = (FrameLayout) findViewById(R.id.remote_video_view_container);
+        FrameLayout container = (FrameLayout) findViewById(R.id.remote_stu_video_view_container);
         container.removeAllViews();
 
         View tipMsg = findViewById(R.id.quick_tips_when_use_agora_sdk); // optional UI
@@ -255,7 +311,7 @@ public class VideoChatViewActivity extends AppCompatActivity {
 
     // Tutorial Step 10
     private void onRemoteUserVideoMuted(int uid, boolean muted) {
-        FrameLayout container = (FrameLayout) findViewById(R.id.remote_video_view_container);
+        FrameLayout container = (FrameLayout) findViewById(R.id.remote_stu_video_view_container);
 
         SurfaceView surfaceView = (SurfaceView) container.getChildAt(0);
 
